@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>무당이 대기 현황</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 300px; border-top: 10px solid #003894; } /* 가천대 블루 느낌 */
+        h1 { color: #333; font-size: 1.5rem; margin-bottom: 1rem; }
+        .count-box { font-size: 5rem; font-weight: bold; color: #003894; margin: 1rem 0; }
+        .status { font-size: 1.1rem; color: #666; }
+        .update-time { font-size: 0.8rem; color: #999; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>🚌 무당이 대기 인원</h1>
+    <div class="status">현재 정류장에</div>
+    <div class="count-box" id="people-count">..</div>
+    <div class="status">명이 기다리고 있어요!</div>
+    <div class="update-time" id="last-update">업데이트 중...</div>
+</div>
+
+<script>
+    // 파이어베이스 데이터 주소 (한슬님이 만든 서버 주소 끝에 /queue.json을 붙입니다)
+    const url = "https://smart-muddangyee-queue-default-rtdb.firebaseio.com/queue.json";
+
+    function updateCount() {
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.people_count !== undefined) {
+                    // 화면의 숫자 업데이트
+                    document.getElementById('people-count').innerText = data.people_count;
+                    
+                    // 마지막 업데이트 시간 표시
+                    const now = new Date();
+                    document.getElementById('last-update').innerText = "최근 확인: " + now.toLocaleTimeString();
+                }
+            })
+            .catch(error => console.error('데이터를 가져오는데 실패했습니다:', error));
+    }
+
+    // 2초마다 서버에서 새로운 숫자를 가져옵니다.
+    setInterval(updateCount, 2000);
+    updateCount(); // 페이지 열자마자 한 번 실행
+</script>
+
+</body>
+</html>
