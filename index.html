@@ -3,28 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>무당이 대기 현황</title>
+    <title>가천대 스마트 무당이 대기 현황</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
-        body { font-family: 'Arial', sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 300px; border-top: 10px solid #003894; } /* 가천대 블루 느낌 */
-        h1 { color: #333; font-size: 1.5rem; margin-bottom: 1rem; }
-        .count-box { font-size: 5rem; font-weight: bold; color: #003894; margin: 1rem 0; }
-        .status { font-size: 1.1rem; color: #666; }
-        .update-time { font-size: 0.8rem; color: #999; margin-top: 2rem; }
+        /* 화면 전체를 지도로 채우기 */
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Arial', sans-serif; }
+        #map { width: 100vw; height: 100vh; z-index: 1; }
+
+        /* 2. 지도 위에 뜰 예쁜 카드 디자인 (크기를 지도에 맞게 살짝 줄였습니다) */
+        .bus-stop-card { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+            text-align: center; 
+            width: 140px; 
+            border-top: 6px solid #003894; /* 가천대 블루 */
+            position: relative;
+            left: -70px; /* 카드가 마커 중앙에 오도록 위치 조정 */
+            top: -40px;
+        }
+        .bus-stop-card h3 { margin: 0 0 10px 0; color: #333; font-size: 1rem; }
+        .count-box { font-size: 2.5rem; font-weight: bold; color: #003894; margin: 5px 0; }
+        .status { font-size: 0.8rem; color: #666; }
+        
+        /* 마커 기본 배경 없애기 */
+        .leaflet-div-icon { background: transparent; border: none; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>🚌 무당이 대기 인원</h1>
-    <div class="status">현재 정류장에</div>
-    <div class="count-box" id="people-count">..</div>
-    <div class="status">명이 기다리고 있어요!</div>
-    <div class="update-time" id="last-update">업데이트 중...</div>
-</div>
+<div id="map"></div>
 
 <script>
-    // 파이어베이스 데이터 주소 (한슬님이 만든 서버 주소 끝에 /queue.json을 붙입니다)
+    // 3. 지도 띄우기 (가천대학교 글로벌캠퍼스 중심 좌표)
+    // 💡 나중에 정류장 위치를 바꾸고 싶으면 이 숫자(위도, 경도)를 수정하세요!
+    var univLocation = [37.4509, 127.1271]; 
+    
+    var map = L.map('map').setView(univLocation, 16); // 16은 지도 확대 정도
+
+    // 오픈스트리트맵(무료 지도 이미지) 가져오기
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 4. 지도 위에 띄울 카드 내용 HTML
+    var cardHTML = `
+        <div class="bus-stop-card">
+            <h3>🚌 무당이 정류장</h3>
+            <div class="status">현재 대기 인원</div>
+            <div class="count-box" id="people-count">..</div>
+            <div class="status" id="last-update" style="font-size: 0.7rem; color: #999; margin-top: 5px;">업데이트 중..</div>
+        </div>
+    `;
+
+    // 5. 카드를 지도 마커로 변환해서 가천대 좌표에 꽂기
+    var customIcon = L.divIcon({ html: cardHTML, className: 'custom-marker' });
+    L.marker(univLocation, { icon: customIcon }).addTo(map);
+
+    // 6. 파이어베이스에서 실시간 데이터 가져오기 (한슬님이 만든 서버 주소)
     const url = "https://smart-muddangyee-queue-default-rtdb.firebaseio.com/queue.json";
 
     function updateCount() {
@@ -32,20 +72,17 @@
             .then(response => response.json())
             .then(data => {
                 if (data && data.people_count !== undefined) {
-                    // 화면의 숫자 업데이트
                     document.getElementById('people-count').innerText = data.people_count;
-                    
-                    // 마지막 업데이트 시간 표시
                     const now = new Date();
-                    document.getElementById('last-update').innerText = "최근 확인: " + now.toLocaleTimeString();
+                    document.getElementById('last-update').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0') + ":" + String(now.getSeconds()).padStart(2, '0') + " 기준";
                 }
             })
             .catch(error => console.error('데이터를 가져오는데 실패했습니다:', error));
     }
 
-    // 2초마다 서버에서 새로운 숫자를 가져옵니다.
+    // 2초마다 갱신
     setInterval(updateCount, 2000);
-    updateCount(); // 페이지 열자마자 한 번 실행
+    updateCount();
 </script>
 
 </body>
