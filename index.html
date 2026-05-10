@@ -13,25 +13,43 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Arial', sans-serif; }
         #map { width: 100vw; height: 100vh; z-index: 1; }
 
-        /* 2. 지도 위에 뜰 예쁜 카드 디자인 (크기를 지도에 맞게 살짝 줄였습니다) */
+        /* 지도 위에 뜰 예쁜 카드 디자인 */
         .bus-stop-card { 
             background: white; 
             padding: 15px; 
             border-radius: 15px; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
             text-align: center; 
-            width: 140px; 
+            width: 150px; /* 글씨가 안 잘리게 살짝 늘림 */
             border-top: 6px solid #003894; /* 가천대 블루 */
             position: relative;
-            left: -70px; /* 카드가 마커 중앙에 오도록 위치 조정 */
+            left: -75px; 
             top: -40px;
+            transition: all 0.3s ease; /* 부드러운 색상 전환 */
         }
+        
         .bus-stop-card h3 { margin: 0 0 10px 0; color: #333; font-size: 1rem; }
         .count-box { font-size: 2.5rem; font-weight: bold; color: #003894; margin: 5px 0; }
         .status { font-size: 0.8rem; color: #666; }
         
         /* 마커 기본 배경 없애기 */
         .leaflet-div-icon { background: transparent; border: none; }
+
+        /* 🚨 버스 도착 시 적용될 특수 디자인 (깜빡임 효과) */
+        .bus-here-card {
+            border-top: 6px solid #e53935; /* 빨간색 띠 */
+            background-color: #ffebee; /* 연한 핑크 배경 */
+            animation: blink 1s infinite alternate; /* 깜빡거림 애니메이션 */
+        }
+        .bus-here-text {
+            font-size: 1.5rem; /* 글씨가 기니까 크기를 살짝 줄임 */
+            color: #e53935;
+        }
+        
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.8; box-shadow: 0 0 15px rgba(229, 57, 53, 0.5); }
+        }
     </style>
 </head>
 <body>
@@ -39,51 +57,23 @@
 <div id="map"></div>
 
 <script>
-    // 3. 지도 띄우기 (가천대학교 글로벌캠퍼스 중심 좌표)
-    // 💡 나중에 정류장 위치를 바꾸고 싶으면 이 숫자(위도, 경도)를 수정하세요!
+    // 지도 띄우기 (가천대학교 무당이 정류장 중심 좌표)
     var univLocation = [37.4509, 127.1271]; 
-    
-    var map = L.map('map').setView(univLocation, 16); // 16은 지도 확대 정도
+    var map = L.map('map').setView(univLocation, 16);
 
-    // 오픈스트리트맵(무료 지도 이미지) 가져오기
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // 4. 지도 위에 띄울 카드 내용 HTML
+    // 💡 자바스크립트로 조종하기 위해 id를 부여했습니다 (card-container, status-label)
     var cardHTML = `
-        <div class="bus-stop-card">
+        <div class="bus-stop-card" id="card-container">
             <h3>🚌 무당이 정류장</h3>
-            <div class="status">현재 대기 인원</div>
+            <div class="status" id="status-label">현재 대기 인원</div>
             <div class="count-box" id="people-count">..</div>
             <div class="status" id="last-update" style="font-size: 0.7rem; color: #999; margin-top: 5px;">업데이트 중..</div>
         </div>
     `;
 
-    // 5. 카드를 지도 마커로 변환해서 가천대 좌표에 꽂기
     var customIcon = L.divIcon({ html: cardHTML, className: 'custom-marker' });
-    L.marker(univLocation, { icon: customIcon }).addTo(map);
-
-    // 6. 파이어베이스에서 실시간 데이터 가져오기 (한슬님이 만든 서버 주소)
-    const url = "https://smart-muddangyee-queue-default-rtdb.firebaseio.com/queue.json";
-
-    function updateCount() {
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.people_count !== undefined) {
-                    document.getElementById('people-count').innerText = data.people_count;
-                    const now = new Date();
-                    document.getElementById('last-update').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0') + ":" + String(now.getSeconds()).padStart(2, '0') + " 기준";
-                }
-            })
-            .catch(error => console.error('데이터를 가져오는데 실패했습니다:', error));
-    }
-
-    // 2초마다 갱신
-    setInterval(updateCount, 2000);
-    updateCount();
-</script>
-
-</body>
-</html>
+    L.marker(univLocation, { icon:
