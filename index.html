@@ -12,10 +12,10 @@
         /* 화면 전체를 지도로 채우기 */
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Arial', sans-serif; }
         #map { 
-    width: 100%; 
-    height: 600px; /* vh 대신 구체적인 px을 넣어보세요 */
-    background-color: #f0f0f0; /* 지도가 안 떠도 회색 배경이라도 보이게 설정 */
-}
+            width: 100%; 
+            height: 600px; /* vh 대신 구체적인 px을 넣어보세요 */
+            background-color: #f0f0f0; /* 지도가 안 떠도 회색 배경이라도 보이게 설정 */
+        }
 
         /* 지도 위에 뜰 예쁜 카드 디자인 */
         .bus-stop-card { 
@@ -80,4 +80,10 @@
     `;
 
     var customIcon = L.divIcon({ html: cardHTML, className: 'custom-marker' });
-    L.marker(univLocation, { icon:
+    
+    // 🚨 잘려있던 코드를 복구하고 지도를 그리는 명령(.addTo)을 추가했습니다.
+    L.marker(univLocation, { icon: customIcon }).addTo(map);
+
+</script>
+</body>
+</html>
