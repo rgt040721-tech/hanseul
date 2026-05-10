@@ -9,11 +9,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* 화면 전체를 지도로 채우기 */
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Arial', sans-serif; }
         #map { width: 100vw; height: 100vh; z-index: 1; }
 
-        /* 지도 위에 뜰 예쁜 카드 기본 디자인 */
         .bus-stop-card { 
             background: white; 
             padding: 15px; 
@@ -31,19 +29,15 @@
         .count-box { font-size: 2.5rem; font-weight: bold; color: #003894; margin: 5px 0; }
         .status { font-size: 0.8rem; color: #666; font-weight: bold; }
         
-        /* 마커 기본 배경 없애기 */
         .leaflet-div-icon { background: transparent; border: none; }
 
-        /* 🚨 AI관 무당이 도착 시 적용될 특수 디자인 (깜빡임 효과) */
+        /* 🚨 버스 도착 시 효과 */
         .bus-here-card {
-            border-top: 6px solid #e53935; /* 빨간색 띠 */
-            background-color: #ffebee; /* 연한 핑크 배경 */
-            animation: blink 1s infinite alternate; /* 깜빡거림 애니메이션 */
+            border-top: 6px solid #e53935;
+            background-color: #ffebee;
+            animation: blink 1s infinite alternate;
         }
-        .bus-here-text {
-            font-size: 1.2rem; 
-            color: #e53935;
-        }
+        .bus-here-text { font-size: 1rem; color: #e53935; margin-top: 5px; }
         
         @keyframes blink {
             from { opacity: 1; }
@@ -56,48 +50,47 @@
 <div id="map"></div>
 
 <script>
-    // 1. 지도 띄우기 (두 정류장이 다 보이게 중심 좌표를 살짝 위로 조정)
-    var map = L.map('map').setView([37.4520, 127.1300], 16); 
+    // 지도 띄우기 (두 정류장 중간쯤으로 설정)
+    var map = L.map('map').setView([37.4525, 127.1300], 16); 
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     // ==========================================
-    // 📍 정류장 1: 기존 무당이 정류장 (대기 인원만 표시)
+    // 📍 정류장 1: AI관 정류장 (유저님 담당)
     // ==========================================
-    var mainStopLocation = [37.4509, 127.1271]; 
-    
-    var mainCardHTML = `
-        <div class="bus-stop-card">
-            <h3>🚌 무당이 정류장</h3>
-            <div class="status">현재 대기 인원</div>
-            <div class="count-box" id="people-count">..</div>
-            <div class="status" id="last-update" style="font-size: 0.7rem; color: #999; margin-top: 5px;">업데이트 중..</div>
-        </div>
-    `;
-    var mainIcon = L.divIcon({ html: mainCardHTML, className: 'custom-marker' });
-    L.marker(mainStopLocation, { icon: mainIcon }).addTo(map);
-
-
-    // ==========================================
-    // 📍 정류장 2: AI관 정류장 (도착 알림만 표시)
-    // ==========================================
-    var aiStopLocation = [37.4535, 127.1330]; // 💡 AI관 좌표 (필요시 수정하세요!)
-    
+    var aiStopLocation = [37.4535, 127.1330]; 
     var aiCardHTML = `
-        <div class="bus-stop-card" id="ai-card-container">
+        <div class="bus-stop-card" id="ai-card">
             <h3>🤖 AI관 정류장</h3>
-            <div class="status" id="ai-status-label" style="font-size: 1rem; margin-top: 15px; margin-bottom: 15px;">버스를 기다리는 중...</div>
+            <div class="status">대기 인원</div>
+            <div class="count-box" id="ai-count">..</div>
+            <div class="status" id="ai-status">대기 중...</div>
         </div>
     `;
     var aiIcon = L.divIcon({ html: aiCardHTML, className: 'custom-marker' });
     L.marker(aiStopLocation, { icon: aiIcon }).addTo(map);
 
+    // ==========================================
+    // 📍 정류장 2: 반도체관 정류장 (친구분 담당)
+    // ==========================================
+    var semiStopLocation = [37.4509, 127.1271]; // 반도체관 좌표로 수정 필요
+    var semiCardHTML = `
+        <div class="bus-stop-card" id="semi-card">
+            <h3>💻 반도체관 정류장</h3>
+            <div class="status">대기 인원</div>
+            <div class="count-box" id="semi-count">..</div>
+            <div class="status" id="semi-status">대기 중...</div>
+        </div>
+    `;
+    var semiIcon = L.divIcon({ html: semiCardHTML, className: 'custom-marker' });
+    L.marker(semiStopLocation, { icon: semiIcon }).addTo(map);
 
     // ==========================================
     // 🔄 파이어베이스 실시간 데이터 연동
     // ==========================================
+    // 전체 방(queue) 데이터를 한 번에 가져옵니다.
     const url = "https://smart-muddangyee-queue-default-rtdb.firebaseio.com/queue.json";
 
     function updateCount() {
@@ -105,27 +98,40 @@
             .then(response => response.json())
             .then(data => {
                 if (data) {
-                    // --- 1. 기존 정류장 로직 (대기 인원 업데이트) ---
-                    if (data.people_count !== undefined) {
-                        document.getElementById('people-count').innerText = data.people_count;
+                    // --- 1. AI관 데이터 업데이트 ---
+                    if (data.ai_station) {
+                        document.getElementById('ai-count').innerText = data.ai_station.people_count || 0;
+                        
+                        const aiCard = document.getElementById('ai-card');
+                        const aiStatus = document.getElementById('ai-status');
+                        
+                        if (data.ai_station.bus_arrived === true) {
+                            aiCard.classList.add('bus-here-card');
+                            aiStatus.classList.add('bus-here-text');
+                            aiStatus.innerText = "🚨 무당이 도착 🚨";
+                        } else {
+                            aiCard.classList.remove('bus-here-card');
+                            aiStatus.classList.remove('bus-here-text');
+                            aiStatus.innerText = "버스를 기다리는 중...";
+                        }
                     }
-                    const now = new Date();
-                    document.getElementById('last-update').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0') + ":" + String(now.getSeconds()).padStart(2, '0') + " 기준";
 
-                    // --- 2. AI관 정류장 로직 (도착 상태 체크 및 UI 변경) ---
-                    const aiCardContainer = document.getElementById('ai-card-container');
-                    const aiStatusLabel = document.getElementById('ai-status-label');
-
-                    // 만약 데이터베이스의 bus_arrived 값이 true라면 (AI관 도착)
-                    if (data.bus_arrived === true) {
-                        aiCardContainer.classList.add('bus-here-card');
-                        aiStatusLabel.classList.add('bus-here-text');
-                        aiStatusLabel.innerText = "🚨 무당이 도착 🚨";
-                    } else {
-                        // 대기 중일 때
-                        aiCardContainer.classList.remove('bus-here-card');
-                        aiStatusLabel.classList.remove('bus-here-text');
-                        aiStatusLabel.innerText = "무당이를 기다리는 중...";
+                    // --- 2. 반도체관 데이터 업데이트 ---
+                    if (data.semi_station) {
+                        document.getElementById('semi-count').innerText = data.semi_station.people_count || 0;
+                        
+                        const semiCard = document.getElementById('semi-card');
+                        const semiStatus = document.getElementById('semi-status');
+                        
+                        if (data.semi_station.bus_arrived === true) {
+                            semiCard.classList.add('bus-here-card');
+                            semiStatus.classList.add('bus-here-text');
+                            semiStatus.innerText = "🚨 무당이 도착 🚨";
+                        } else {
+                            semiCard.classList.remove('bus-here-card');
+                            semiStatus.classList.remove('bus-here-text');
+                            semiStatus.innerText = "버스를 기다리는 중...";
+                        }
                     }
                 }
             })
