@@ -11,7 +11,11 @@
     <style>
         /* 화면 전체를 지도로 채우기 */
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Arial', sans-serif; }
-        #map { width: 100vw; height: 100vh; z-index: 1; }
+        #map { 
+    width: 100%; 
+    height: 600px; /* vh 대신 구체적인 px을 넣어보세요 */
+    background-color: #f0f0f0; /* 지도가 안 떠도 회색 배경이라도 보이게 설정 */
+}
 
         /* 지도 위에 뜰 예쁜 카드 디자인 */
         .bus-stop-card { 
