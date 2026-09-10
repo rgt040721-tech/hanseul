@@ -19,7 +19,7 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
             text-align: center; 
             width: 150px; 
-            border-top: 6px solid #003894; /* 가천대 블루 */
+            border-top: 6px solid #003894;
             position: relative;
             left: -75px; 
             top: -40px;
@@ -31,7 +31,6 @@
         
         .leaflet-div-icon { background: transparent; border: none; }
 
-        /* 🚨 버스 도착 시 효과 */
         .bus-here-card {
             border-top: 6px solid #e53935;
             background-color: #ffebee;
@@ -50,21 +49,18 @@
 <div id="map"></div>
 
 <script>
-    // 지도 띄우기 (두 정류장 중간쯤으로 설정)
     var map = L.map('map').setView([37.4525, 127.1300], 16); 
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // ==========================================
-    // 📍 정류장 1: AI관 정류장 (유저님 담당)
-    // ==========================================
+    // 📍 AI관 정류장
     var aiStopLocation = [37.4535, 127.1330]; 
     var aiCardHTML = `
         <div class="bus-stop-card" id="ai-card">
             <h3>🤖 AI관 정류장</h3>
-            <div class="status">대기 인원</div>
+            <div class="status">감지된 무당이</div>
             <div class="count-box" id="ai-count">..</div>
             <div class="status" id="ai-status">대기 중...</div>
         </div>
@@ -72,10 +68,8 @@
     var aiIcon = L.divIcon({ html: aiCardHTML, className: 'custom-marker' });
     L.marker(aiStopLocation, { icon: aiIcon }).addTo(map);
 
-    // ==========================================
-    // 📍 정류장 2: 반도체관 정류장 (친구분 담당)
-    // ==========================================
-    var semiStopLocation = [37.4509, 127.1271]; // 반도체관 좌표로 수정 필요
+    // 📍 반도체관 정류장
+    var semiStopLocation = [37.4509, 127.1271];
     var semiCardHTML = `
         <div class="bus-stop-card" id="semi-card">
             <h3>💻 반도체대학 정류장</h3>
@@ -87,10 +81,7 @@
     var semiIcon = L.divIcon({ html: semiCardHTML, className: 'custom-marker' });
     L.marker(semiStopLocation, { icon: semiIcon }).addTo(map);
 
-    // ==========================================
     // 🔄 파이어베이스 실시간 데이터 연동
-    // ==========================================
-    // 전체 방(queue) 데이터를 한 번에 가져옵니다.
     const url = "https://smart-muddangyee-queue-default-rtdb.firebaseio.com/queue.json";
 
     function updateCount() {
@@ -98,9 +89,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data) {
-                    // --- 1. AI관 데이터 업데이트 ---
+                    // AI관: 감지된 무당이 대수
                     if (data.ai_station) {
-                        document.getElementById('ai-count').innerText = data.ai_station.people_count || 0;
+                        document.getElementById('ai-count').innerText = data.ai_station.bus_count || 0;
                         
                         const aiCard = document.getElementById('ai-card');
                         const aiStatus = document.getElementById('ai-status');
@@ -116,7 +107,7 @@
                         }
                     }
 
-                    // --- 2. 반도체관 데이터 업데이트 ---
+                    // 반도체관: 대기 인원
                     if (data.semi_station) {
                         document.getElementById('semi-count').innerText = data.semi_station.people_count || 0;
                         
