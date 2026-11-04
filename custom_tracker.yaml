@@ -1,0 +1,14 @@
+tracker_type: botsort
+track_low_thresh: 0.1
+new_track_thresh: 0.4
+match_thresh: 0.8
+track_buffer: 18
+track_high_thresh: 0.4
+gmc_method: none
+proximity_thresh: 0.5
+appearance_thresh: 0.25
+with_reid: False
+fuse_score: False
+mot20: False
+min_box_area: 10
+model: auto
