@@ -28,6 +28,8 @@
         .bus-stop-card h3 { margin: 0 0 10px 0; color: #333; font-size: 1rem; }
         .count-box { font-size: 2.5rem; font-weight: bold; color: #003894; margin: 5px 0; }
         .status { font-size: 0.8rem; color: #666; font-weight: bold; }
+        .count-box.text-mode { font-size: 1.8rem; }
+        .bus-here-card .count-box { color: #e53935; }
         
         .leaflet-div-icon { background: transparent; border: none; }
 
@@ -67,8 +69,8 @@
     var aiCardHTML = `
         <div class="bus-stop-card" id="ai-card">
             <h3>🤖 AI관 정류장</h3>
-            <div class="status">감지된 무당이</div>
-            <div class="count-box" id="ai-count">..</div>
+            <div class="status">무당이</div>
+            <div class="count-box text-mode" id="ai-count">..</div>
             <div class="status" id="ai-status">대기 중...</div>
         </div>
     `;
@@ -99,20 +101,33 @@
             .then(response => response.json())
             .then(data => {
                 if (data) {
-                    // AI관: 감지된 무당이 대수
+                    // AI관: 무당이 도착 여부 (대수는 표시하지 않음)
                     if (data.ai_station) {
-                        document.getElementById('ai-count').innerText = data.ai_station.bus_count || 0;
-                        
                         const aiCard = document.getElementById('ai-card');
                         const aiStatus = document.getElementById('ai-status');
+                        const aiCount = document.getElementById('ai-count');
+
+                        // 📡 마지막 갱신 시각 확인
+                        const aiUpdatedAt = data.ai_station.updated_at;
+                        const aiOffline = !aiUpdatedAt || (Date.now() - aiUpdatedAt > OFFLINE_LIMIT);
                         
-                        if (data.ai_station.bus_arrived === true) {
-                            aiCard.classList.add('bus-here-card');
-                            aiStatus.classList.add('bus-here-text');
-                            aiStatus.innerText = "🚨 무당이 도착 🚨";
-                        } else {
+                        if (aiOffline) {
                             aiCard.classList.remove('bus-here-card');
                             aiStatus.classList.remove('bus-here-text');
+                            aiCard.classList.add('offline-card');
+                            aiCount.innerText = "-";
+                            aiStatus.innerText = "📡 연결 끊김";
+                        } else if (data.ai_station.bus_arrived === true) {
+                            aiCard.classList.remove('offline-card');
+                            aiCard.classList.add('bus-here-card');
+                            aiStatus.classList.add('bus-here-text');
+                            aiCount.innerText = "도착";
+                            aiStatus.innerText = "🚨 무당이 도착 🚨";
+                        } else {
+                            aiCard.classList.remove('offline-card');
+                            aiCard.classList.remove('bus-here-card');
+                            aiStatus.classList.remove('bus-here-text');
+                            aiCount.innerText = "없음";
                             aiStatus.innerText = "무당이를 기다리는 중...";
                         }
                     }
