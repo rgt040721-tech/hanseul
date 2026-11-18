@@ -114,13 +114,25 @@
                         const aiCard = document.getElementById('ai-card');
                         const aiStatus = document.getElementById('ai-status');
                         const aiCount = document.getElementById('ai-count');
+
+                        // 📡 마지막 갱신 시각 확인
+                        const aiUpdatedAt = data.ai_station.updated_at;
+                        const aiOffline = !aiUpdatedAt || (Date.now() - aiUpdatedAt > OFFLINE_LIMIT);
                         
-                        if (data.ai_station.bus_arrived === true) {
+                        if (aiOffline) {
+                            aiCard.classList.remove('bus-here-card');
+                            aiStatus.classList.remove('bus-here-text');
+                            aiCard.classList.add('offline-card');
+                            aiCount.innerText = "-";
+                            aiStatus.innerText = "📡 연결 끊김";
+                        } else if (data.ai_station.bus_arrived === true) {
+                            aiCard.classList.remove('offline-card');
                             aiCard.classList.add('bus-here-card');
                             aiStatus.classList.add('bus-here-text');
                             aiCount.innerText = "도착";
                             aiStatus.innerText = "🚨 무당이 도착 🚨";
                         } else {
+                            aiCard.classList.remove('offline-card');
                             aiCard.classList.remove('bus-here-card');
                             aiStatus.classList.remove('bus-here-text');
                             aiCount.innerText = "없음";
